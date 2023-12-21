@@ -27,11 +27,9 @@ class SautoSpider(scrapy.Spider):
         }
 
         params = json.load(open("params.json", "r"))
-    
-        url = "https://www.sauto.cz/api/v1/items/search",
-        
+            
         for param in params:
-            url = "https://www.sauto.cz/api/v1/items/search" + urlencode(param)
+            url = "https://www.sauto.cz/api/v1/items/search?" + urlencode(param)
             yield scrapy.Request(
                 url=url, 
                 method='GET',
