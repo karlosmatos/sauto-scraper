@@ -1,43 +1,50 @@
-from pathlib import Path
-from urllib.parse import urlencode
-
 import scrapy
 import json
+from urllib.parse import urlencode
 
+import datetime
+import logging
+
+def log_url(func):
+    # Create a logger
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+
+    # Create a file handler
+    handler = logging.FileHandler('sauto_spider.log')
+    handler.setLevel(logging.INFO)
+
+    # Add the handler to the logger
+    logger.addHandler(handler)
+
+    def wrapper(self, *args, **kwargs):
+        result = func(self, *args, **kwargs)
+        for request in result:
+            # Log the URL to the file
+            logger.info(f"Date: {datetime.datetime.now()}, scraping url: {request.url}")
+            yield request
+    return wrapper
 
 class SautoSpider(scrapy.Spider):
     name = "sauto"
+    BASE_URL = "https://www.sauto.cz/api/v1/items/search?"
 
+    @log_url
     def start_requests(self):
-        cookies = {
-            'appver': 'v1.1.350',
-            'qusnyQusny': '1',
-            'szncmpone': '0',
-            'seznam.cz|szncmpone': '0',
-            '__cc': 'SnpTMWhkekZ6UVdpQWNMVjsxNzAzMDg5ODEx:THJJemVyeGFJdGsxRW15bzsxNzAzMTA0MjEx',
-            'euconsent-v2': 'CP3FdEAP3FdEAD3ACCCSAfEgAAAAAEPgAATIAAAQugRQAKAAsACoAFwAQAAyABoAEQAI4ATAAqgBbADEAH4AQkAiACJAEcAJwAZYAzQB3AD9AIQARYAuoBtAE2gKkAWoAtwBeYDBAGSANTAhcAAA.YAAAAAAAAAAA',
-            'ds': '1YGGabLMWuACtkhq0UYX2ybeLuJ6F6am0cbZG6eeHAjwKj9tOyOGLBsvCb_alDZWTRSqRq',
-            'ps': '1YGGabLMWuACtkhq0UYX2ybeLuJ6F6am0cbZG6eeHAjwKj9tOyOGLBsvCb_alDZWTRSqRq',
-            'last-redirect': '1',
-            '.seznam.cz|sid': 'id=11340736668656664840|t=1702998056.744|te=1703078923.888|c=22891916791F2C6AA2CE1B494F07F87B',
-            'sid': 'id=11340736668656664840|t=1702998056.744|te=1703078923.888|c=22891916791F2C6AA2CE1B494F07F87B',
-            'sid': 'id=11340736668656664840|t=1702998056.744|te=1703078923.888|c=22891916791F2C6AA2CE1B494F07F87B',
-            'szncsr': '1703079575',
-            'lps': 'eyJfZnJlc2giOmZhbHNlLCJfcGVybWFuZW50Ijp0cnVlfQ.ZYLuww.O8X5pNteFYj_ZliyXlKs_dTp5pI',
-        }
+        with open("params.json", "r") as file:
+            params = json.load(file)
 
-        params = json.load(open("params.json", "r"))
-            
-        for param in params:
-            url = "https://www.sauto.cz/api/v1/items/search?" + urlencode(param)
-            yield scrapy.Request(
-                url=url, 
-                method='GET',
-                cookies=cookies,
-                callback=self.parse
-            )
+        for price in range(0, 2000001, 200000):
+            params["price_from"] = price
+            params["price_to"] = price + 200000 if price <= 1800000 else 0    
+            url = f"{self.BASE_URL}{urlencode(params)}"
+            yield scrapy.Request(url=url, method='GET', callback=self.parse)
+            self.logger.info(f"Scraping url: {url}")
 
     def parse(self, response):
-        # Save response to json file
-        with open("response.json", "w") as f:
-            json.dump(response.json(), f, indent=4)
+        try:
+            data = json.loads(response.body)
+            for item in data.get("results", []):
+                yield item
+        except json.JSONDecodeError:
+            self.logger.error("Failed to parse the response")
