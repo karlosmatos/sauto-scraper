@@ -3,13 +3,14 @@
 ## Description
 
 This is a simple scraper that uses scrapy to scrape car list from the website https://www.sauto.cz/. The scraped data can be used for further analysis.
+You can identify your prefered parameters in params.json
 
 ## Installation
 
 1. Clone the repository
 
     ```bash
-    git clone 
+    git clone https://github.com/karlosmatos/sauto-scraper.git
     ```
 
 2. Install the requirements
@@ -18,7 +19,9 @@ This is a simple scraper that uses scrapy to scrape car list from the website ht
     pip install -r requirements.txt
     ```
 
-3. Run the scraper
+3. Modify ```params.json``` file based on your search
+
+4. Run the scraper
     
     ```bash
     scrapy crawl sauto -O data/sauto.json
