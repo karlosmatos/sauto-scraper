@@ -3,7 +3,7 @@
 ## Description
 
 This is a simple scraper that uses scrapy to scrape car list from the website https://www.sauto.cz/. The scraped data can be used for further analysis.
-You can identify your prefered parameters in params.json
+You can identify your prefered parameters in ```params.json```
 
 ## Installation
 
