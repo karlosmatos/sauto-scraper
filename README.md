@@ -19,7 +19,7 @@ You can identify your prefered parameters in params.json
     pip install -r requirements.txt
     ```
 
-3. Modify ```params.json``` file based on your search
+3. Modify ```params.json``` file based on your search. Param "limit" must be equal or less than 1000.
 
 4. Run the scraper
     
