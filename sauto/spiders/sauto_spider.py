@@ -74,7 +74,7 @@ class SautoSpider(scrapy.Spider):
             list: The generated URLs.
         """
         urls = []
-        for price in range(0, 2000001, 200000):
+        for price in range(0, 2000001, 200000): # Update the range by yourself
             params["price_from"] = price
             params["price_to"] = price + 200000 if price <= 1800000 else 0
             url = f"{self.BASE_URL}{urlencode(params)}"
@@ -93,7 +93,6 @@ class SautoSpider(scrapy.Spider):
         """
         try:
             data = json.loads(response.body)
-            for item in data.get("results", []):
-                yield item
+            yield from data.get("results", [])
         except json.JSONDecodeError:
             self.logger.error("Failed to parse the response")
