@@ -66,6 +66,11 @@ class SautoSpider(scrapy.Spider):
     def generate_urls(self, params: dict) -> list:
         """
         Generate URLs with different price ranges.
+        Price range can be configured via params.json:
+        - price_max: Maximum price (None or omitted for unlimited)
+        - price_step: Price increment step (default: 200000)
+        - price_from: Starting price (default: 0)
+        - price_to: Ending price (if set, overrides price_max)
 
         Args:
             params (dict): The parameters for the API request.
@@ -74,11 +79,47 @@ class SautoSpider(scrapy.Spider):
             list: The generated URLs.
         """
         urls = []
-        for price in range(0, 2000001, 200000): # Update the range by yourself
-            params["price_from"] = price
-            params["price_to"] = price + 200000 if price <= 1800000 else 0
-            url = f"{self.BASE_URL}{urlencode(params)}"
+        
+        # Extract price configuration
+        price_from = int(params.pop("price_from", 0))
+        price_step = int(params.pop("price_step", 200000))
+        price_max = params.pop("price_max", None)
+        price_to = params.pop("price_to", None)
+        
+        # Handle JSON null values (can be None or string "null")
+        if price_max is None or (isinstance(price_max, str) and price_max.lower() == "null"):
+            price_max = None
+        if price_to is None or (isinstance(price_to, str) and price_to.lower() == "null"):
+            price_to = None
+        
+        # If price_to is explicitly set, use single range
+        if price_to is not None:
+            params_copy = params.copy()
+            params_copy["price_from"] = str(price_from)
+            params_copy["price_to"] = str(int(price_to))
+            url = f"{self.BASE_URL}{urlencode(params_copy)}"
             urls.append(url)
+            return urls
+        
+        # Generate multiple price ranges
+        if price_max is None:
+            # Unlimited: generate ranges until we hit a reasonable maximum
+            # Use a very high number as practical limit (e.g., 50 million)
+            price_max = 50000000
+            self.logger.info("No price_max specified, using unlimited range up to 50,000,000 CZK")
+        else:
+            price_max = int(price_max)
+        
+        # Generate price ranges
+        current_price = price_from
+        while current_price < price_max:
+            params_copy = params.copy()
+            params_copy["price_from"] = str(current_price)
+            params_copy["price_to"] = str(min(current_price + price_step, price_max))
+            url = f"{self.BASE_URL}{urlencode(params_copy)}"
+            urls.append(url)
+            current_price += price_step
+        
         return urls
 
     def parse(self, response):

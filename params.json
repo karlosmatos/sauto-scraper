@@ -1,8 +1,11 @@
 {
     "limit": "1000",
     "offset": "0",
-    "manufacturer_model_seo": "mercedes-benz",
+    "manufacturer_model_seo": "volkswagen",
     "condition_seo": "nove,ojete,predvadeci",
     "category_id": "838",
-    "operating_lease": "false"
+    "operating_lease": "false",
+    "price_from": "0",
+    "price_step": "50000",
+    "price_max": null
 }
