@@ -5,23 +5,21 @@ from urllib.parse import urlencode
 import datetime
 import logging
 
+# Set up logger once at module level to prevent handler accumulation
+_url_logger = logging.getLogger(f"{__name__}.url_logger")
+_url_logger.setLevel(logging.INFO)
+if not _url_logger.handlers:
+    _handler = logging.FileHandler('sauto_spider.log')
+    _handler.setLevel(logging.INFO)
+    _handler.setFormatter(logging.Formatter('%(message)s'))
+    _url_logger.addHandler(_handler)
+
+
 def log_url(func):
-    # Create a logger
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-
-    # Create a file handler
-    handler = logging.FileHandler('sauto_spider.log')
-    handler.setLevel(logging.INFO)
-
-    # Add the handler to the logger
-    logger.addHandler(handler)
-
     def wrapper(self, *args, **kwargs):
         result = func(self, *args, **kwargs)
         for request in result:
-            # Log the URL to the file
-            logger.info(f"Date: {datetime.datetime.now()}, scraping url: {request.url}")
+            _url_logger.info(f"Date: {datetime.datetime.now()}, scraping url: {request.url}")
             yield request
     return wrapper
 
@@ -60,7 +58,7 @@ class SautoSpider(scrapy.Spider):
         urls = self.generate_urls(params)
 
         for url in urls:
-            yield scrapy.Request(url=url, method='GET', callback=self.parse)
+            yield scrapy.Request(url=url, method='GET', callback=self.parse, errback=self.handle_error)
             self.logger.info(f"Scraping url: {url}")
 
     def generate_urls(self, params: dict) -> list:
@@ -137,3 +135,13 @@ class SautoSpider(scrapy.Spider):
             yield from data.get("results", [])
         except json.JSONDecodeError:
             self.logger.error("Failed to parse the response")
+
+    def handle_error(self, failure):
+        """
+        Handle failed requests after all retries are exhausted.
+
+        Args:
+            failure (twisted.python.failure.Failure): The failure object containing error details.
+        """
+        request = failure.request
+        self.logger.error(f"Request failed: {request.url}, Error: {failure.value}")
