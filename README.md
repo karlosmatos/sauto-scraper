@@ -104,7 +104,7 @@ Modify the `params.json` file to customize your search parameters:
 Run the scraper to output JSON:
 
 ```bash
-scrapy crawl sauto -O data/sauto.json
+python -m scrapy crawl sauto -O data/sauto.json
 ```
 
 ### Output Formats
@@ -113,13 +113,13 @@ You can output in different formats:
 
 ```bash
 # JSON format
-scrapy crawl sauto -O data/sauto.json
+python -m scrapy crawl sauto -O data/sauto.json
 
 # CSV format
-scrapy crawl sauto -O data/sauto.csv
+python -m scrapy crawl sauto -O data/sauto.csv
 
 # JSON Lines format
-scrapy crawl sauto -O data/sauto.jl
+python -m scrapy crawl sauto -O data/sauto.jl
 ```
 
 ### Logs
