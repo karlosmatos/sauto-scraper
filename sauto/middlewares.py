@@ -3,10 +3,24 @@
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
+from fake_useragent import UserAgent
+
 from scrapy import signals
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
+
+
+class RandomUserAgentMiddleware:
+    """Middleware to rotate User-Agent for each request using fake-useragent."""
+
+    FALLBACK_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+
+    def __init__(self):
+        self.ua = UserAgent(fallback=self.FALLBACK_UA)
+
+    def process_request(self, request, spider):
+        request.headers['User-Agent'] = self.ua.random
 
 
 class SautoSpiderMiddleware:
